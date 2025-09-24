@@ -6,51 +6,38 @@
  INSTRUCTIONS — HOW TO USE
  --------------------------
 
- 1. Chrome (Desktop):
+ 1. Chrome / Edge:
     - Open the page you want to capture.
-    - Press F12 or Ctrl+Shift+I (Cmd+Opt+I on Mac) to open DevTools.
+    - Press F12 or Ctrl+Shift+I (Cmd+Opt+I on Mac) → open DevTools.
     - Go to the "Console" tab.
     - Paste this entire script and press Enter.
     - A floating "Page Capture" panel will appear (bottom-right corner).
-    - Click "Start Capture" → wait → a .html file will be downloaded.
+    - Buttons:
+        • Start Capture → saves page as .html (CSS + images inlined).
+        • Copy Text → copies all text content (ignores copy-blockers).
+        • Close → removes the panel.
 
- 2. Microsoft Edge (Desktop):
-    - Open the target page.
-    - Press F12 or Ctrl+Shift+I to open DevTools.
-    - Select the "Console" tab.
-    - Paste the script → Enter.
-    - Use the floating GUI panel as above.
+ 2. Firefox:
+    - Open the page → press Ctrl+Shift+K (Cmd+Opt+K on Mac) → Console.
+    - Paste script → Enter → use the floating GUI.
+    - Note: Some cross-domain CSS/images may not inline due to CORS.
 
- 3. Firefox (Desktop):
-    - Open the target page.
-    - Press Ctrl+Shift+K (Cmd+Opt+K on Mac) to open the Web Console.
-    - Paste the script → Enter.
-    - Use the floating GUI panel as above.
-    - (Note: Firefox may block cross-domain CSS/image fetches; some resources 
-      may not inline fully unless CORS headers are open.)
-
- 4. Safari (Mac):
-    - Enable the "Develop" menu in Preferences → Advanced → "Show Develop menu".
-    - Open the page.
-    - Press Cmd+Opt+C to open the Web Inspector.
-    - Paste the script into the Console and press Enter.
-    - Use the floating GUI panel as above.
-    - (Safari may be stricter with CORS and blob downloads.)
+ 3. Safari (Mac):
+    - Enable "Develop" menu in Preferences → Advanced.
+    - Open page → Cmd+Opt+C → Console.
+    - Paste script → Enter → use the GUI.
+    - Safari may block cross-domain fonts/images.
 
  Notes:
-   - The capture process inlines CSS stylesheets and images directly into the 
-     HTML file, so the saved page looks as close as possible to the live page.
-   - Depending on the size of the page (lots of images/CSS), capture can take 
-     a few seconds. Watch the status text in the panel.
-   - Use "Close" to dismiss the panel.
+   - "Copy Text" button extracts text from the DOM (via innerText).
+   - Works even if the site blocks right-click / drag-to-copy.
+   - Status messages show progress.
 
 ================================================================================
 */
 
 (() => {
   // ====== Full Page Capture with GUI ======
-  // Creates a floating GUI panel with Start/Stop buttons
-  // Captures DOM, CSS, and images inline -> downloadable .html file
 
   // --- Helper Functions ---
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
@@ -107,6 +94,25 @@
     setTimeout(() => URL.revokeObjectURL(a.href), 3000);
   }
 
+  async function copyPageText() {
+    try {
+      const text = document.body.innerText || '';
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch (err) {
+      console.warn('Clipboard write failed, falling back:', err);
+      // Fallback: textarea method
+      const text = document.body.innerText || '';
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      return true;
+    }
+  }
+
   // --- GUI Panel ---
   if (window.__pageCaptureGUI) {
     window.__pageCaptureGUI.remove();
@@ -126,6 +132,7 @@
   panel.innerHTML = `
     <div style="margin-bottom:6px;font-weight:bold;">Page Capture</div>
     <button id="captureStart" style="margin:2px;">Start Capture</button>
+    <button id="copyText" style="margin:2px;">Copy Text</button>
     <button id="captureClose" style="margin:2px;">Close</button>
     <div id="captureStatus" style="margin-top:6px;font-size:12px;opacity:0.8;"></div>
   `;
@@ -135,12 +142,19 @@
 
   const statusEl = panel.querySelector('#captureStatus');
   const startBtn = panel.querySelector('#captureStart');
+  const copyBtn = panel.querySelector('#copyText');
   const closeBtn = panel.querySelector('#captureClose');
 
   startBtn.onclick = async () => {
     statusEl.textContent = 'Capturing... please wait.';
     await capturePage();
     statusEl.textContent = 'Done! File downloaded.';
+  };
+
+  copyBtn.onclick = async () => {
+    statusEl.textContent = 'Copying text...';
+    await copyPageText();
+    statusEl.textContent = 'All text copied to clipboard!';
   };
 
   closeBtn.onclick = () => {
