@@ -141,7 +141,7 @@
   panel.style.boxShadow = '0 2px 6px rgba(0,0,0,0.4)';
   panel.innerHTML = `
     <div style="margin-bottom:6px;font-weight:bold;">Page Capture</div>
-    <button id="captureStart" style="margin:2px;">Start Capture</button>
+    <button id="captureStart" style="margin:2px;">Start Download</button>
     <button id="copyText" style="margin:2px;">Copy Text</button>
     <button id="captureClose" style="margin:2px;">Close</button>
     <div id="captureStatus" style="margin-top:6px;font-size:12px;opacity:0.8;"></div>
