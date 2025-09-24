@@ -1,0 +1,149 @@
+/*
+================================================================================
+ Full Page Capture GUI — Browser Console Script
+================================================================================
+
+ INSTRUCTIONS — HOW TO USE
+ --------------------------
+
+ 1. Chrome (Desktop):
+    - Open the page you want to capture.
+    - Press F12 or Ctrl+Shift+I (Cmd+Opt+I on Mac) to open DevTools.
+    - Go to the "Console" tab.
+    - Paste this entire script and press Enter.
+    - A floating "Page Capture" panel will appear (bottom-right corner).
+    - Click "Start Capture" → wait → a .html file will be downloaded.
+
+ 2. Microsoft Edge (Desktop):
+    - Open the target page.
+    - Press F12 or Ctrl+Shift+I to open DevTools.
+    - Select the "Console" tab.
+    - Paste the script → Enter.
+    - Use the floating GUI panel as above.
+
+ 3. Firefox (Desktop):
+    - Open the target page.
+    - Press Ctrl+Shift+K (Cmd+Opt+K on Mac) to open the Web Console.
+    - Paste the script → Enter.
+    - Use the floating GUI panel as above.
+    - (Note: Firefox may block cross-domain CSS/image fetches; some resources 
+      may not inline fully unless CORS headers are open.)
+
+ 4. Safari (Mac):
+    - Enable the "Develop" menu in Preferences → Advanced → "Show Develop menu".
+    - Open the page.
+    - Press Cmd+Opt+C to open the Web Inspector.
+    - Paste the script into the Console and press Enter.
+    - Use the floating GUI panel as above.
+    - (Safari may be stricter with CORS and blob downloads.)
+
+ Notes:
+   - The capture process inlines CSS stylesheets and images directly into the 
+     HTML file, so the saved page looks as close as possible to the live page.
+   - Depending on the size of the page (lots of images/CSS), capture can take 
+     a few seconds. Watch the status text in the panel.
+   - Use "Close" to dismiss the panel.
+
+================================================================================
+*/
+
+(() => {
+  // ====== Full Page Capture with GUI ======
+  // Creates a floating GUI panel with Start/Stop buttons
+  // Captures DOM, CSS, and images inline -> downloadable .html file
+
+  // --- Helper Functions ---
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+  async function inlineCSS(doc) {
+    const sheets = Array.from(doc.querySelectorAll('link[rel="stylesheet"]'));
+    for (const link of sheets) {
+      try {
+        const href = link.href;
+        const cssText = await fetch(href).then(r => r.text());
+        const style = document.createElement('style');
+        style.textContent = cssText;
+        link.replaceWith(style);
+      } catch (err) {
+        console.warn('Failed to inline CSS:', link.href, err);
+      }
+    }
+  }
+
+  async function inlineImages(doc) {
+    const imgs = Array.from(doc.querySelectorAll('img'));
+    for (const img of imgs) {
+      try {
+        const src = img.src;
+        if (!src.startsWith('data:')) {
+          const blob = await fetch(src).then(r => r.blob());
+          const reader = new FileReader();
+          const dataUrl = await new Promise((res) => {
+            reader.onloadend = () => res(reader.result);
+            reader.readAsDataURL(blob);
+          });
+          img.src = dataUrl;
+        }
+      } catch (err) {
+        console.warn('Failed to inline image:', img.src, err);
+      }
+    }
+  }
+
+  async function capturePage() {
+    const clone = document.documentElement.cloneNode(true);
+    const tempDoc = document.implementation.createHTMLDocument('');
+    tempDoc.replaceChild(clone, tempDoc.documentElement);
+
+    await inlineCSS(tempDoc);
+    await inlineImages(tempDoc);
+
+    const html = '<!DOCTYPE html>\n' + tempDoc.documentElement.outerHTML;
+    const blob = new Blob([html], { type: 'text/html' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = (document.title || 'page') + '.html';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+  }
+
+  // --- GUI Panel ---
+  if (window.__pageCaptureGUI) {
+    window.__pageCaptureGUI.remove();
+  }
+
+  const panel = document.createElement('div');
+  panel.style.position = 'fixed';
+  panel.style.bottom = '20px';
+  panel.style.right = '20px';
+  panel.style.padding = '10px';
+  panel.style.background = 'rgba(0,0,0,0.8)';
+  panel.style.color = '#fff';
+  panel.style.fontFamily = 'sans-serif';
+  panel.style.zIndex = 999999;
+  panel.style.borderRadius = '6px';
+  panel.style.boxShadow = '0 2px 6px rgba(0,0,0,0.4)';
+  panel.innerHTML = `
+    <div style="margin-bottom:6px;font-weight:bold;">Page Capture</div>
+    <button id="captureStart" style="margin:2px;">Start Capture</button>
+    <button id="captureClose" style="margin:2px;">Close</button>
+    <div id="captureStatus" style="margin-top:6px;font-size:12px;opacity:0.8;"></div>
+  `;
+
+  document.body.appendChild(panel);
+  window.__pageCaptureGUI = panel;
+
+  const statusEl = panel.querySelector('#captureStatus');
+  const startBtn = panel.querySelector('#captureStart');
+  const closeBtn = panel.querySelector('#captureClose');
+
+  startBtn.onclick = async () => {
+    statusEl.textContent = 'Capturing... please wait.';
+    await capturePage();
+    statusEl.textContent = 'Done! File downloaded.';
+  };
+
+  closeBtn.onclick = () => {
+    panel.remove();
+  };
+})();
