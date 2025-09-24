@@ -6,33 +6,43 @@
  INSTRUCTIONS — HOW TO USE
  --------------------------
 
- 1. Chrome / Edge:
+ 1. Chrome (Desktop):
     - Open the page you want to capture.
-    - Press F12 or Ctrl+Shift+I (Cmd+Opt+I on Mac) → open DevTools.
+    - Press F12 or Ctrl+Shift+I (Cmd+Opt+I on Mac) to open DevTools.
     - Go to the "Console" tab.
     - Paste this entire script and press Enter.
     - A floating "Page Capture" panel will appear (bottom-right corner).
-    - Buttons:
-        • Start Capture → saves page as .html (CSS + images inlined).
-        • Copy Text → copies all text content (ignores copy-blockers).
-        • Close → removes the panel.
+    - Click "Start Capture" → wait → a .html file will be downloaded.
 
- 2. Firefox:
-    - Open the page → press Ctrl+Shift+K (Cmd+Opt+K on Mac) → Console.
-    - Paste script → Enter → use the floating GUI.
-    - Note: Some cross-domain CSS/images may not inline due to CORS.
+ 2. Microsoft Edge (Desktop):
+    - Open the target page.
+    - Press F12 or Ctrl+Shift+I to open DevTools.
+    - Select the "Console" tab.
+    - Paste the script → Enter.
+    - Use the floating GUI panel as above.
 
- 3. Safari (Mac):
-    - Enable "Develop" menu in Preferences → Advanced.
-    - Open page → Cmd+Opt+C → Console.
-    - Paste script → Enter → use the GUI.
-    - Safari may block cross-domain fonts/images.
+ 3. Firefox (Desktop):
+    - Open the target page.
+    - Press Ctrl+Shift+K (Cmd+Opt+K on Mac) to open the Web Console.
+    - Paste the script → Enter.
+    - Use the floating GUI panel as above.
+    - (Note: Firefox may block cross-domain CSS/image fetches; some resources 
+      may not inline fully unless CORS headers are open.)
+
+ 4. Safari (Mac):
+    - Enable the "Develop" menu in Preferences → Advanced → "Show Develop menu".
+    - Open the page.
+    - Press Cmd+Opt+C to open the Web Inspector.
+    - Paste the script into the Console and press Enter.
+    - Use the floating GUI panel as above.
+    - (Safari may be stricter with CORS and blob downloads.)
 
  Notes:
-   - "Copy Text" button extracts text from the DOM (via innerText).
-   - Works even if the site blocks right-click / drag-to-copy.
-   - Status messages show progress.
-
+   - The capture process inlines CSS stylesheets and images directly into the 
+     HTML file, so the saved page looks as close as possible to the live page.
+   - Depending on the size of the page (lots of images/CSS), capture can take 
+     a few seconds. Watch the status text in the panel.
+   - Use "Close" to dismiss the panel.
 ================================================================================
 */
 
